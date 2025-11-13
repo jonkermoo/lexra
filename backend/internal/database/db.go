@@ -105,6 +105,96 @@ func (db *DB) GetTextbook(id int) (*models.Textbook, error) {
 	return &textbook, nil
 }
 
+// CreateUser creates a new user with hashed password and verification token
+func (db *DB) CreateUser(email, passwordHash, verificationToken string) (*models.User, error) {
+	var user models.User
+
+	query := `
+		INSERT INTO users (email, password_hash, verification_token, verified)
+		VALUES ($1, $2, $3, false)
+		RETURNING id, email, verified, created_at
+	`
+
+	err := db.conn.QueryRow(query, email, passwordHash, verificationToken).Scan(
+		&user.ID,
+		&user.Email,
+		&user.Verified,
+		&user.CreatedAt,
+	)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to create user: %w", err)
+	}
+
+	return &user, nil
+}
+
+// GetUserByEmail retrieves a user by their email address
+func (db *DB) GetUserByEmail(email string) (*models.User, error) {
+	var user models.User
+
+	query := `
+		SELECT id, email, password_hash, verified, created_at, last_login
+		FROM users
+		WHERE email = $1
+	`
+
+	err := db.conn.QueryRow(query, email).Scan(
+		&user.ID,
+		&user.Email,
+		&user.PasswordHash,
+		&user.Verified,
+		&user.CreatedAt,
+		&user.LastLogin,
+	)
+
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("user not found")
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user: %w", err)
+	}
+
+	return &user, nil
+}
+
+// VerifyUser marks a user's email as verified using their verification token
+func (db *DB) VerifyUser(token string) error {
+	query := `
+		UPDATE users
+		SET verified = true, verification_token = NULL
+		WHERE verification_token = $1 AND verified = false
+	`
+
+	result, err := db.conn.Exec(query, token)
+	if err != nil {
+		return fmt.Errorf("failed to verify user: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to check rows affected: %w", err)
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("invalid or already used verification token")
+	}
+
+	return nil
+}
+
+// UpdateLastLogin updates the user's last login timestamp
+func (db *DB) UpdateLastLogin(userID int) error {
+	query := `UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = $1`
+
+	_, err := db.conn.Exec(query, userID)
+	if err != nil {
+		return fmt.Errorf("failed to update last login: %w", err)
+	}
+
+	return nil
+}
+
 // Close the database connection
 func (db *DB) Close() error {
 	return db.conn.Close()
