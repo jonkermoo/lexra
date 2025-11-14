@@ -92,7 +92,7 @@ func (s *AuthService) Login(req models.LoginRequest) (string, *models.User, erro
 	}
 
 	// Generate JWT token
-	token, err := s.generateJWT(user.ID, user.Email)
+	token, err := s.GenerateToken(user.ID, user.Email)
 	if err != nil {
 		return "", nil, fmt.Errorf("failed to generate token: %w", err)
 	}
@@ -130,7 +130,7 @@ func (s *AuthService) ValidateToken(tokenString string) (int, error) {
 }
 
 // Create a new JWT token
-func (s *AuthService) generateJWT(userID int, email string) (string, error) {
+func (s *AuthService) GenerateToken(userID int, email string) (string, error) {
 	expirationHours := 168 // 7 days
 	if envHours := os.Getenv("JWT_EXPIRATION_HOURS"); envHours != "" {
 		fmt.Sscanf(envHours, "%d", &expirationHours)

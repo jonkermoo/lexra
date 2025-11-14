@@ -40,15 +40,25 @@ func (h *AuthHandler) HandleRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Generate JWT token for the newly registered user
+	token, err := h.authService.GenerateToken(user.ID, user.Email)
+	if err != nil {
+		http.Error(w, "Failed to generate token", http.StatusInternalServerError)
+		return
+	}
+
 	// Clear password hash before sending response (security)
 	user.PasswordHash = ""
 
-	// Send success response
+	// Build response with token and user info (same as login)
+	response := models.AuthResponse{
+		Token: token,
+		User:  *user,
+	}
+
+	// Send response
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"message": "User registered successfully",
-		"user":    user,
-	})
+	json.NewEncoder(w).Encode(response)
 }
 
 // Handle user login
