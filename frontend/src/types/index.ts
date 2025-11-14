@@ -7,7 +7,7 @@ export interface User {
   last_login: string;
 }
 
-export interface loginRequest{
+export interface LoginRequest{
   email: string;
   password: string;
 }
@@ -24,7 +24,7 @@ export interface Textbook {
   title: string;
   s3_key: string;
   uploaded_at: string;
-  process: boolean;
+  processed: boolean;
 }
 
 export interface TextbookStatus {
