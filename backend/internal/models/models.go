@@ -84,3 +84,10 @@ type AuthResponse struct {
 type VerifyEmailRequest struct {
 	Token string `json:"token"`
 }
+
+// Upload request/response models
+type UploadResponse struct {
+	TextbookID int    `json:"textbook_id"`
+	Title      string `json:"title"`
+	Message    string `json:"message"`
+}
