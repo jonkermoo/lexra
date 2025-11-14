@@ -1,5 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import Home from "./pages/Home";
 import Login from "./pages/Login";
+import Register from "./pages/Register";
 import Library from "./pages/Library";
 import Query from "./pages/Query";
 
@@ -7,16 +9,15 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Default route - redirect to login */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
+        {/* Home page */}
+        <Route path="/" element={<Home />} />
 
-        {/* Login page */}
+        {/* Auth pages */}
         <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
 
-        {/* Library page (protected) */}
+        {/* Protected pages */}
         <Route path="/library" element={<Library />} />
-
-        {/* Query page (protected) */}
         <Route path="/query" element={<Query />} />
       </Routes>
     </BrowserRouter>
