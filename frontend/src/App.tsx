@@ -4,6 +4,7 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Library from "./pages/Library";
 import Query from "./pages/Query";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
   return (
@@ -17,8 +18,16 @@ function App() {
         <Route path="/register" element={<Register />} />
 
         {/* Protected pages */}
-        <Route path="/library" element={<Library />} />
-        <Route path="/query" element={<Query />} />
+        <Route path="/library" element={
+          <ProtectedRoute>
+            <Library />
+          </ProtectedRoute>
+        } />
+        <Route path="/query" element={
+          <ProtectedRoute>
+            <Query />
+          </ProtectedRoute>
+        } />
       </Routes>
     </BrowserRouter>
   );
