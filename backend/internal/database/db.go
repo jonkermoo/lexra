@@ -131,6 +131,81 @@ func (db *DB) CreateTextbook(userID int, title, s3Key string) (*models.Textbook,
 	return &textbook, nil
 }
 
+// List all textbooks for a user
+func (db *DB) ListTextbooks(userID int) ([]models.Textbook, error) {
+	query := `
+		SELECT id, user_id, title, s3_key, uploaded_at, processed
+		FROM textbooks
+		WHERE user_id = $1
+		ORDER BY uploaded_at DESC
+	`
+
+	rows, err := db.conn.Query(query, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list textbooks: %w", err)
+	}
+	defer rows.Close()
+
+	var textbooks []models.Textbook
+	for rows.Next() {
+		var textbook models.Textbook
+		err := rows.Scan(
+			&textbook.ID,
+			&textbook.UserID,
+			&textbook.Title,
+			&textbook.S3Key,
+			&textbook.UploadedAt,
+			&textbook.Processed,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan textbook: %w", err)
+		}
+		textbooks = append(textbooks, textbook)
+	}
+
+	return textbooks, nil
+}
+
+// Delete a textbook and all its chunks
+func (db *DB) DeleteTextbook(textbookID, userID int) error {
+	// First verify the user owns this textbook
+	var ownerID int
+	err := db.conn.QueryRow("SELECT user_id FROM textbooks WHERE id = $1", textbookID).Scan(&ownerID)
+	if err == sql.ErrNoRows {
+		return fmt.Errorf("textbook not found")
+	}
+	if err != nil {
+		return fmt.Errorf("failed to check textbook ownership: %w", err)
+	}
+	if ownerID != userID {
+		return fmt.Errorf("permission denied")
+	}
+
+	// Delete chunks first
+	_, err = db.conn.Exec("DELETE FROM chunks WHERE textbook_id = $1", textbookID)
+	if err != nil {
+		return fmt.Errorf("failed to delete chunks: %w", err)
+	}
+
+	// Delete the textbook
+	_, err = db.conn.Exec("DELETE FROM textbooks WHERE id = $1", textbookID)
+	if err != nil {
+		return fmt.Errorf("failed to delete textbook: %w", err)
+	}
+
+	return nil
+}
+
+// Get chunk count for a textbook (useful for status)
+func (db *DB) GetTextbookChunkCount(textbookID int) (int, error) {
+	var count int
+	err := db.conn.QueryRow("SELECT COUNT(*) FROM chunks WHERE textbook_id = $1", textbookID).Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("failed to count chunks: %w", err)
+	}
+	return count, nil
+}
+
 // Create a new user with hashed password and verification token
 func (db *DB) CreateUser(email, passwordHash, verificationToken string) (*models.User, error) {
 	var user models.User
