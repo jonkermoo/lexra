@@ -14,6 +14,7 @@ export default function Library() {
   const [question, setQuestion] = useState("");
   const [isQuerying, setIsQuerying] = useState(false);
   const [answer, setAnswer] = useState<QueryResponse | null>(null);
+  const [showUploadModal, setShowUploadModal] = useState(false);
   const navigate = useNavigate();
 
   // Load textbooks when page loads
@@ -47,9 +48,10 @@ export default function Library() {
       await textbookAPI.upload(uploadFile, uploadTitle);
       // Reload textbooks
       await loadTextbooks();
-      // Reset form
+      // Reset form and close modal
       setUploadFile(null);
       setUploadTitle("");
+      setShowUploadModal(false);
     } catch (err: any) {
       setError(err.response?.data || "Upload failed");
     } finally {
@@ -249,53 +251,6 @@ export default function Library() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-8">
-        {/* Upload Form */}
-        <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg shadow-lg p-6 mb-8">
-          <h2 className="text-xl font-semibold text-white mb-4">
-            Upload New Textbook
-          </h2>
-          <p className="text-gray-400 mb-4 text-sm">
-            Upload a PDF textbook to create a new folder. Click on a folder to
-            ask questions.
-          </p>
-          <form onSubmit={handleUpload} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Textbook Title
-              </label>
-              <input
-                type="text"
-                value={uploadTitle}
-                onChange={(e) => setUploadTitle(e.target.value)}
-                placeholder="e.g., Biology 101"
-                required
-                className="w-full px-4 py-2 bg-gray-900/50 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none placeholder-gray-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                PDF File
-              </label>
-              <input
-                type="file"
-                accept=".pdf"
-                onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
-                required
-                className="w-full text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-blue-600 file:text-white file:font-semibold hover:file:bg-blue-500 file:cursor-pointer"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={isUploading || !uploadFile}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 disabled:bg-gray-600 transition shadow-lg shadow-blue-500/20"
-            >
-              {isUploading ? "Uploading..." : "Upload Textbook"}
-            </button>
-          </form>
-        </div>
-
         {/* Error Message */}
         {error && (
           <div className="bg-red-900/50 border border-red-700 text-red-300 px-4 py-3 rounded-lg mb-6">
@@ -305,6 +260,22 @@ export default function Library() {
 
         {/* Folders Grid */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+          {/* Add Folder Button */}
+          <button
+            onClick={() => setShowUploadModal(true)}
+            className="group relative bg-gray-800/30 backdrop-blur-sm border-2 border-dashed border-gray-600 rounded-lg shadow-lg p-6 hover:border-blue-500/50 transition cursor-pointer"
+          >
+            <div className="flex flex-col items-center">
+              <div className="text-6xl mb-3 group-hover:scale-110 transition">
+                ➕
+              </div>
+              <h3 className="text-sm font-semibold text-gray-400 text-center group-hover:text-blue-400 transition">
+                Add Folder
+              </h3>
+            </div>
+          </button>
+
+          {/* Existing Folders */}
           {textbooks.map((textbook) => (
             <div
               key={textbook.id}
@@ -351,7 +322,7 @@ export default function Library() {
           <div className="text-center py-12">
             <div className="text-6xl mb-4">📚</div>
             <p className="text-gray-400 text-lg mb-2">
-              No textbooks yet. Upload one to get started!
+              No textbooks yet. Click the + button to add one!
             </p>
             <p className="text-gray-500 text-sm">
               Each textbook will appear as a folder you can click to ask
@@ -360,6 +331,81 @@ export default function Library() {
           </div>
         )}
       </main>
+
+      {/* Upload Modal */}
+      {showUploadModal && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-800/95 backdrop-blur-sm border border-gray-700 rounded-lg shadow-2xl p-8 w-full max-w-md">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-semibold text-white">
+                Upload New Textbook
+              </h2>
+              <button
+                onClick={() => {
+                  setShowUploadModal(false);
+                  setUploadFile(null);
+                  setUploadTitle("");
+                  setError("");
+                }}
+                className="text-gray-400 hover:text-white text-2xl"
+              >
+                ×
+              </button>
+            </div>
+
+            <form onSubmit={handleUpload} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Textbook Title
+                </label>
+                <input
+                  type="text"
+                  value={uploadTitle}
+                  onChange={(e) => setUploadTitle(e.target.value)}
+                  placeholder="e.g., Biology 101"
+                  required
+                  className="w-full px-4 py-2 bg-gray-900/50 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none placeholder-gray-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  PDF File
+                </label>
+                <input
+                  type="file"
+                  accept=".pdf"
+                  onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
+                  required
+                  className="w-full text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-blue-600 file:text-white file:font-semibold hover:file:bg-blue-500 file:cursor-pointer"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowUploadModal(false);
+                    setUploadFile(null);
+                    setUploadTitle("");
+                    setError("");
+                  }}
+                  className="flex-1 px-6 py-2 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isUploading || !uploadFile}
+                  className="flex-1 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 disabled:bg-gray-600 transition shadow-lg shadow-blue-500/20"
+                >
+                  {isUploading ? "Uploading..." : "Upload"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
