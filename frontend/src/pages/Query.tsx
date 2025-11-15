@@ -158,7 +158,10 @@ export default function Query() {
                 </h3>
                 <div className="space-y-3">
                   {answer.sources.map((source, index) => (
-                    <div key={index} className="bg-gray-900/50 border border-gray-700 rounded-lg p-4">
+                    <div
+                      key={index}
+                      className="bg-gray-900/50 border border-gray-700 rounded-lg p-4"
+                    >
                       <div className="font-medium text-blue-400 mb-2">
                         Page {source.page_number}
                       </div>

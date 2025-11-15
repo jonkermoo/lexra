@@ -122,111 +122,157 @@ export default function Library() {
     );
   }
 
-  // Folder detail view
+  // Folder detail view - ChatGPT style
   if (selectedFolder) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+      <div className="flex flex-col h-screen bg-gray-900">
         {/* Header */}
-        <header className="bg-gray-900/50 backdrop-blur-sm border-b border-gray-800">
-          <div className="max-w-7xl mx-auto px-4 py-6 flex justify-between items-center">
+        <header className="flex-shrink-0 border-b border-gray-800">
+          <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
             <div className="flex items-center gap-4">
               <button
                 onClick={handleCloseFolder}
-                className="px-4 py-2 bg-gray-800 text-gray-300 rounded-lg hover:bg-gray-700 transition border border-gray-700"
+                className="text-gray-400 hover:text-white transition"
               >
-                ← Back to Library
+                ← Back
               </button>
               <div className="flex items-center gap-2">
-                <div className="text-2xl">📁</div>
-                <h1 className="text-2xl font-bold text-white">
+                <div className="text-xl">📁</div>
+                <h1 className="text-lg font-semibold text-white">
                   {selectedFolder.title}
                 </h1>
               </div>
             </div>
             <button
               onClick={handleLogout}
-              className="px-4 py-2 bg-gray-800 text-gray-300 rounded-lg hover:bg-gray-700 transition border border-gray-700"
+              className="text-gray-400 hover:text-white transition text-sm"
             >
               Logout
             </button>
           </div>
         </header>
 
-        <main className="max-w-4xl mx-auto px-4 py-8">
-          {/* Status Badge */}
-          {!selectedFolder.processed && (
-            <div className="bg-yellow-900/50 border border-yellow-700 text-yellow-300 px-4 py-3 rounded-lg mb-6">
-              ⏳ This textbook is still being processed. Please check back in a
-              few minutes.
-            </div>
-          )}
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Chat Area - Scrollable */}
+          <div className="flex-1 overflow-y-auto">
+            <div className="max-w-3xl mx-auto px-4">
+              {/* Status Warning */}
+              {!selectedFolder.processed && (
+                <div className="bg-yellow-900/30 border border-yellow-700/50 text-yellow-300 px-6 py-4 rounded-lg mb-8 text-center mt-8">
+                  This textbook is still being processed. Please check back in a few minutes.
+                </div>
+              )}
 
-          {/* Question Form */}
-          <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg shadow-lg p-6 mb-6">
-            <h2 className="text-xl font-semibold text-white mb-4">
-              Ask a Question
-            </h2>
-            <form onSubmit={handleAskQuestion} className="space-y-4">
-              <textarea
-                value={question}
-                onChange={(e) => setQuestion(e.target.value)}
-                placeholder="What would you like to know about this textbook?"
-                disabled={!selectedFolder.processed}
-                rows={4}
-                className="w-full px-4 py-3 bg-gray-900/50 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition placeholder-gray-500 disabled:opacity-50"
-              />
-              <button
-                type="submit"
-                disabled={
-                  isQuerying || !question.trim() || !selectedFolder.processed
-                }
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 disabled:bg-gray-600 transition shadow-lg shadow-blue-500/20"
-              >
-                {isQuerying ? "Searching..." : "Ask Question"}
-              </button>
-            </form>
-          </div>
+              {/* Conversation History */}
+              {answer && (
+                <div className="space-y-8 py-8">
+                  {/* User Question */}
+                  <div className="flex gap-4">
+                    <div className="w-8 h-8 rounded-full bg-blue-600 flex-shrink-0 flex items-center justify-center text-white font-semibold">
+                      U
+                    </div>
+                    <div className="flex-1 pt-1">
+                      <p className="text-gray-100 leading-relaxed">{question}</p>
+                    </div>
+                  </div>
 
-          {/* Error Message */}
-          {error && (
-            <div className="bg-red-900/50 border border-red-700 text-red-300 px-4 py-3 rounded-lg mb-6">
-              {error}
-            </div>
-          )}
+                  {/* AI Response */}
+                  <div className="flex gap-4">
+                    <div className="w-8 h-8 rounded-full bg-gray-700 flex-shrink-0 flex items-center justify-center text-white">
+                      📚
+                    </div>
+                    <div className="flex-1 pt-1">
+                      <p className="text-gray-100 leading-relaxed whitespace-pre-wrap mb-6">
+                        {answer.answer}
+                      </p>
 
-          {/* Answer Display */}
-          {answer && (
-            <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-lg shadow-lg p-6">
-              <h3 className="text-lg font-semibold text-white mb-4">Answer</h3>
-              <p className="text-gray-300 mb-6 leading-relaxed whitespace-pre-wrap">
-                {answer.answer}
-              </p>
-
-              {answer.sources && answer.sources.length > 0 && (
-                <div>
-                  <h4 className="text-md font-semibold text-white mb-3">
-                    Sources
-                  </h4>
-                  <div className="space-y-3">
-                    {answer.sources.map((source, index) => (
-                      <div
-                        key={index}
-                        className="bg-gray-900/50 border border-gray-700 rounded-lg p-4"
-                      >
-                        <div className="text-blue-400 font-medium mb-2">
-                          Page {source.page_number}
+                      {/* Sources */}
+                      {answer.sources && answer.sources.length > 0 && (
+                        <div className="mt-6">
+                          <p className="text-sm text-gray-400 font-semibold mb-3">
+                            Sources
+                          </p>
+                          <div className="space-y-2">
+                            {answer.sources.map((source, index) => (
+                              <div
+                                key={index}
+                                className="bg-gray-800/50 border border-gray-700 rounded-lg p-4"
+                              >
+                                <div className="text-blue-400 text-sm font-medium mb-2">
+                                  Page {source.page_number}
+                                </div>
+                                <p className="text-gray-400 text-sm">
+                                  "{source.content}"
+                                </p>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                        <p className="text-gray-400 text-sm">
-                          "{source.content}"
-                        </p>
-                      </div>
-                    ))}
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
+
+              {/* Error Message */}
+              {error && (
+                <div className="bg-red-900/30 border border-red-700/50 text-red-300 px-6 py-4 rounded-lg text-center mt-8">
+                  {error}
+                </div>
+              )}
             </div>
-          )}
-        </main>
+          </div>
+
+          {/* Input Area - Transitions from center to bottom */}
+          <div
+            className={`flex-shrink-0 bg-gray-900 transition-all duration-500 ease-in-out ${
+              answer ? 'border-t border-gray-800' : 'flex-1 flex flex-col items-center justify-center'
+            }`}
+          >
+            <div className={`w-full max-w-3xl px-4 mx-auto transition-all duration-500 ${
+              answer ? 'py-4' : ''
+            }`}>
+              {/* Welcome Message - Only show when no answer */}
+              {!answer && (
+                <div className="text-center mb-12">
+                  <div className="text-7xl mb-6">📁</div>
+                  <h2 className="text-3xl font-semibold text-white mb-4">
+                    {selectedFolder.title}
+                  </h2>
+                  <p className="text-gray-400 text-lg mb-12">
+                    Ask me anything about this textbook
+                  </p>
+                </div>
+              )}
+
+              {/* Input Form */}
+              <form onSubmit={handleAskQuestion} className="flex items-center gap-3">
+                <input
+                  type="text"
+                  value={question}
+                  onChange={(e) => setQuestion(e.target.value)}
+                  placeholder="Ask anything..."
+                  disabled={!selectedFolder.processed}
+                  className="flex-1 px-5 py-3 bg-gray-800 border border-gray-700 text-white rounded-full focus:outline-none focus:border-gray-600 transition placeholder-gray-500 disabled:opacity-50"
+                />
+                <button
+                  type="submit"
+                  disabled={
+                    isQuerying || !question.trim() || !selectedFolder.processed
+                  }
+                  className="w-10 h-10 flex items-center justify-center bg-white text-gray-900 rounded-full hover:bg-gray-100 disabled:bg-gray-700 disabled:text-gray-500 disabled:opacity-50 transition flex-shrink-0"
+                >
+                  {isQuerying ? (
+                    <div className="w-4 h-4 border-2 border-gray-900 border-t-transparent rounded-full animate-spin"></div>
+                  ) : (
+                    <span className="text-lg font-bold">↑</span>
+                  )}
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -238,8 +284,7 @@ export default function Library() {
       <header className="bg-gray-900/50 backdrop-blur-sm border-b border-gray-800">
         <div className="max-w-7xl mx-auto px-4 py-6 flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <div className="text-2xl">📚</div>
-            <h1 className="text-3xl font-bold text-white">Lexra Library</h1>
+            <h1 className="text-3xl font-bold text-white">Lexra Dashboard</h1>
           </div>
           <button
             onClick={handleLogout}
@@ -266,8 +311,8 @@ export default function Library() {
             className="group relative bg-gray-800/30 backdrop-blur-sm border-2 border-dashed border-gray-600 rounded-lg shadow-lg p-6 hover:border-blue-500/50 transition cursor-pointer"
           >
             <div className="flex flex-col items-center">
-              <div className="text-6xl mb-3 group-hover:scale-110 transition">
-                ➕
+              <div className="text-6xl mb-3 group-hover:scale-110 transition text-white">
+                +
               </div>
               <h3 className="text-sm font-semibold text-gray-400 text-center group-hover:text-blue-400 transition">
                 Add Folder
@@ -294,7 +339,9 @@ export default function Library() {
                 {/* Status Badge */}
                 <div className="text-xs mb-3">
                   {textbook.processed ? (
-                    <span className="text-green-400 font-semibold">✓ Ready</span>
+                    <span className="text-green-400 font-semibold">
+                      ✓ Ready
+                    </span>
                   ) : (
                     <span className="text-yellow-400 font-semibold">
                       ⏳ Processing
@@ -319,7 +366,7 @@ export default function Library() {
 
         {/* Empty State */}
         {textbooks.length === 0 && (
-          <div className="text-center py-12">
+          <div className="text-center py-40">
             <div className="text-6xl mb-4">📚</div>
             <p className="text-gray-400 text-lg mb-2">
               No textbooks yet. Click the + button to add one!
