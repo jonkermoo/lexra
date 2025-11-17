@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { textbookAPI, queryAPI } from "../services/api";
 import type { Textbook, QueryResponse } from "../types";
@@ -13,14 +13,25 @@ export default function Library() {
   const [selectedFolder, setSelectedFolder] = useState<Textbook | null>(null);
   const [question, setQuestion] = useState("");
   const [isQuerying, setIsQuerying] = useState(false);
-  const [answer, setAnswer] = useState<QueryResponse | null>(null);
+  const [conversationHistory, setConversationHistory] = useState<
+    Array<{ question: string; answer: QueryResponse }>
+  >([]);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const navigate = useNavigate();
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Load textbooks when page loads
   useEffect(() => {
     loadTextbooks();
   }, []);
+
+  // Auto-scroll to bottom when conversation updates
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  }, [conversationHistory]);
 
   const loadTextbooks = async () => {
     try {
@@ -78,13 +89,13 @@ export default function Library() {
 
   const handleOpenFolder = (textbook: Textbook) => {
     setSelectedFolder(textbook);
-    setAnswer(null);
+    setConversationHistory([]);
     setQuestion("");
   };
 
   const handleCloseFolder = () => {
     setSelectedFolder(null);
-    setAnswer(null);
+    setConversationHistory([]);
     setQuestion("");
   };
 
@@ -92,17 +103,31 @@ export default function Library() {
     e.preventDefault();
     if (!question.trim() || !selectedFolder) return;
 
+    const currentQuestion = question.trim();
+    setQuestion(""); // Clear input immediately
     setIsQuerying(true);
     setError("");
 
+    // Reset textarea height
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+    }
+
     try {
       const response = await queryAPI.ask({
-        question: question.trim(),
+        question: currentQuestion,
         textbook_id: selectedFolder.id,
       });
-      setAnswer(response);
+
+      // Add to conversation history
+      setConversationHistory((prev) => [
+        ...prev,
+        { question: currentQuestion, answer: response },
+      ]);
     } catch (err: any) {
       setError(err.response?.data || "Failed to get answer");
+      // Restore question on error
+      setQuestion(currentQuestion);
     } finally {
       setIsQuerying(false);
     }
@@ -166,7 +191,7 @@ export default function Library() {
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Chat Area - Scrollable */}
-          <div className="flex-1 overflow-y-auto">
+          <div ref={chatContainerRef} className="flex-1 overflow-y-auto">
             <div className="max-w-3xl mx-auto px-4">
               {/* Status Warning */}
               {!selectedFolder.processed && (
@@ -176,53 +201,60 @@ export default function Library() {
               )}
 
               {/* Conversation History */}
-              {answer && (
+              {conversationHistory.length > 0 && (
                 <div className="space-y-8 py-8">
-                  {/* User Question */}
-                  <div className="flex gap-4">
-                    <div className="w-8 h-8 rounded-full bg-blue-600 flex-shrink-0 flex items-center justify-center text-white font-semibold">
-                      U
-                    </div>
-                    <div className="flex-1 pt-1">
-                      <p className="text-gray-100 leading-relaxed">{question}</p>
-                    </div>
-                  </div>
-
-                  {/* AI Response */}
-                  <div className="flex gap-4">
-                    <div className="w-8 h-8 rounded-full bg-gray-700 flex-shrink-0 flex items-center justify-center text-white">
-                      📚
-                    </div>
-                    <div className="flex-1 pt-1">
-                      <p className="text-gray-100 leading-relaxed whitespace-pre-wrap mb-6">
-                        {answer.answer}
-                      </p>
-
-                      {/* Sources */}
-                      {answer.sources && answer.sources.length > 0 && (
-                        <div className="mt-6">
-                          <p className="text-sm text-gray-400 font-semibold mb-3">
-                            Sources
-                          </p>
-                          <div className="space-y-2">
-                            {answer.sources.map((source, index) => (
-                              <div
-                                key={index}
-                                className="bg-gray-800/50 border border-gray-700 rounded-lg p-4"
-                              >
-                                <div className="text-blue-400 text-sm font-medium mb-2">
-                                  Page {source.page_number}
-                                </div>
-                                <p className="text-gray-400 text-sm">
-                                  "{source.content}"
-                                </p>
-                              </div>
-                            ))}
-                          </div>
+                  {conversationHistory.map((conversation, convIndex) => (
+                    <div key={convIndex} className="space-y-8">
+                      {/* User Question */}
+                      <div className="flex gap-4">
+                        <div className="w-8 h-8 rounded-full bg-blue-600 flex-shrink-0 flex items-center justify-center text-white font-semibold">
+                          U
                         </div>
-                      )}
+                        <div className="flex-1 pt-1">
+                          <p className="text-gray-100 leading-relaxed whitespace-pre-wrap">
+                            {conversation.question}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* AI Response */}
+                      <div className="flex gap-4">
+                        <div className="w-8 h-8 rounded-full bg-gray-700 flex-shrink-0 flex items-center justify-center text-white">
+                          📚
+                        </div>
+                        <div className="flex-1 pt-1">
+                          <p className="text-gray-100 leading-relaxed whitespace-pre-wrap mb-6">
+                            {conversation.answer.answer}
+                          </p>
+
+                          {/* Sources */}
+                          {conversation.answer.sources &&
+                            conversation.answer.sources.length > 0 && (
+                              <div className="mt-6">
+                                <p className="text-sm text-gray-400 font-semibold mb-3">
+                                  Sources
+                                </p>
+                                <div className="space-y-2">
+                                  {conversation.answer.sources.map((source, index) => (
+                                    <div
+                                      key={index}
+                                      className="bg-gray-800/50 border border-gray-700 rounded-lg p-4"
+                                    >
+                                      <div className="text-blue-400 text-sm font-medium mb-2">
+                                        Page {source.page_number}
+                                      </div>
+                                      <p className="text-gray-400 text-sm">
+                                        "{source.content}"
+                                      </p>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  ))}
                 </div>
               )}
 
@@ -238,14 +270,18 @@ export default function Library() {
           {/* Input Area - Transitions from center to bottom */}
           <div
             className={`flex-shrink-0 bg-gray-900 transition-all duration-500 ease-in-out ${
-              answer ? 'border-t border-gray-800' : 'flex-1 flex flex-col items-center justify-center'
+              conversationHistory.length > 0
+                ? "border-t border-gray-800"
+                : "flex-1 flex flex-col items-center justify-center"
             }`}
           >
-            <div className={`w-full max-w-3xl px-4 mx-auto transition-all duration-500 ${
-              answer ? 'py-4' : ''
-            }`}>
-              {/* Welcome Message - Only show when no answer */}
-              {!answer && (
+            <div
+              className={`w-full max-w-3xl px-4 mx-auto transition-all duration-500 ${
+                conversationHistory.length > 0 ? "py-4" : ""
+              }`}
+            >
+              {/* Welcome Message - Only show when no conversation */}
+              {conversationHistory.length === 0 && (
                 <div className="text-center mb-12">
                   <div className="text-7xl mb-6">📁</div>
                   <h2 className="text-3xl font-semibold text-white mb-4">
@@ -260,6 +296,7 @@ export default function Library() {
               {/* Input Form */}
               <form onSubmit={handleAskQuestion} className="flex items-end gap-3">
                 <textarea
+                  ref={textareaRef}
                   value={question}
                   onChange={(e) => setQuestion(e.target.value)}
                   onKeyDown={handleKeyDown}
