@@ -18,7 +18,7 @@ A cloud-deployed Retrieval-Augmented Generation (RAG) system that transforms tex
 - AWS SDK for S3 integration
 - OpenAI Go client for embeddings and completions
 - Deployed on AWS EC2
-- 
+
 ### Frontend
 - React 19 + TypeScript
 - React Router 7 for navigation
@@ -44,6 +44,7 @@ A cloud-deployed Retrieval-Augmented Generation (RAG) system that transforms tex
 - Allow metadata to be stored in RDS as well (PDF of study guides or notes) and saved in the folders
 - Support images in chat
 - Better UI lol
+
 
 
 
