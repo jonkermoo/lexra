@@ -57,6 +57,7 @@ func main() {
 				"http://localhost:3000",    // Alternative local port
 				"https://www.lexra.online", // Production frontend (www)
 				"https://lexra.online",     // Production frontend (no www)
+				"https://lexra-1539-jwbn-johnny-zhus-projects-0f83c3d9.vercel.app", // Vercel deployment
 			}
 
 			// Check if origin is in allowed list
