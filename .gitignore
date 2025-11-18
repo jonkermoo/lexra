@@ -1,5 +1,6 @@
 *.env
 *.env.local
+*.env.production
 */.env
 
 # Uploaded PDFs and test data (too large for GitHub)
