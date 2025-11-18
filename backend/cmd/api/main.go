@@ -69,6 +69,11 @@ func main() {
 				}
 			}
 
+			// Also allow any Vercel preview URL
+			if strings.HasSuffix(origin, ".vercel.app") {
+				isAllowed = true
+			}
+
 			if isAllowed {
 				w.Header().Set("Access-Control-Allow-Origin", origin)
 			}
